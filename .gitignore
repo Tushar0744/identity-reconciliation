@@ -1,8 +1,12 @@
 HELP.md
-target/
+#target/
+# Ignore all files in the target directory except JAR files
+target/*
+!target/*.jar
+
 !.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+#!**/src/main/**/target/
+#!**/src/test/**/target/
 
 ### STS ###
 .apt_generated
