@@ -1,24 +1,26 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim
-RUN mkdir /temp
+# Use the official Maven image to create a build artifact.
+# Start by specifying the base image
+FROM maven:3.6.3-jdk-8 AS build
 
-# Set the working directory
+# Set the current working directory inside the image
 WORKDIR /app
 
-# Copy the local JAR file to the container
-COPY target/demo-0.0.1-SNAPSHOT.jar /app
+# Copy the pom.xml file and download the dependencies
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-ARG PROPERTIES_PATH=src/main/resources/
-RUN echo $PROPERTIES_PATH
-COPY $PROPERTIES_PATH/application.properties /temp/application.properties
+# Copy the rest of the application source code and compile it
+COPY src ./src
+RUN mvn clean package
 
-# Make port 8080 available to the world outside this container
-EXPOSE 8080
+# Use the official OpenJDK image to run the application
+FROM openjdk:8-jdk-alpine
 
-ENV JAVA_OPTS=" -Dexternal.property.resource=/temp/ -Dspring.config.location=/temp/"
+# Set the current working directory inside the image
+WORKDIR /app
 
-# Run the JAR file
-#ENTRYPOINT ["java", "-jar", "app.jar"]
-ENTRYPOINT exec java -jar $JAVA_OPTS demo-0.0.1-SNAPSHOT.jar
+# Copy the JAR file from the build stage
+COPY --from=build /app/target/*.jar app.jar
 
-
+# Specify the command to run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
