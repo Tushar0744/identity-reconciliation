@@ -1,26 +1,14 @@
-# Use the official Maven image to create a build artifact.
-# Start by specifying the base image
-FROM maven:3.6.3-jdk-8 AS build
+# Use an official OpenJDK runtime as a parent image
+FROM openjdk:17-jdk-slim
 
-# Set the current working directory inside the image
-WORKDIR /app
+# Add a volume pointing to /tmp
+VOLUME /tmp
 
-# Copy the pom.xml file and download the dependencies
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# The application's jar file
+ARG JAR_FILE=target/demo-0.0.1-SNAPSHOT.jar
 
-# Copy the rest of the application source code and compile it
-COPY src ./src
-RUN mvn clean package
+# Add the application's jar to the container
+COPY ${JAR_FILE} app.jar
 
-# Use the official OpenJDK image to run the application
-FROM openjdk:8-jdk-alpine
-
-# Set the current working directory inside the image
-WORKDIR /app
-
-# Copy the JAR file from the build stage
-COPY --from=build /app/target/*.jar app.jar
-
-# Specify the command to run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run the jar file
+ENTRYPOINT ["java","-jar","/app.jar"]
